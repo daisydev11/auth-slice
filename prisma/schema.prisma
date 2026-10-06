@@ -1,0 +1,73 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  // Stored lowercased. Uniqueness is enforced here, not only in code.
+  email           String    @unique
+  name            String
+  // bcrypt hash. The plain password is never stored.
+  passwordHash    String
+  // Null until the emailed code is confirmed.
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+
+  sessions           Session[]
+  verificationCodes  VerificationCode[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  // SHA-256 of the cookie value. The raw token only ever lives in the cookie.
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model VerificationCode {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // SHA-256 of the 6-digit code.
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  // Wrong guesses against this code. The code dies at the configured maximum.
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // SHA-256 of the token in the emailed link.
+  tokenHash String    @unique
+  expiresAt DateTime
+  // Set once, atomically, when the token is redeemed.
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model RateLimit {
+  // "<action>:<ip or email>"
+  key         String   @id
+  count       Int
+  windowStart DateTime
+}
