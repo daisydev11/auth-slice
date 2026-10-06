@@ -36,7 +36,9 @@ describe("signupSchema", () => {
 
   it("rejects a missing field and a wrong type", () => {
     expect(signupSchema.safeParse({ email: valid.email, password: valid.password }).success).toBe(false);
-    expect(signupSchema.safeParse({ ...valid, password: 12345678 }).success).toBe(false);
+    const wrongType = signupSchema.safeParse({ ...valid, password: 12345678 });
+    expect(wrongType.success).toBe(false);
+    if (!wrongType.success) expect(toFieldErrors(wrongType.error).password).toBe("Enter a password.");
   });
 });
 
