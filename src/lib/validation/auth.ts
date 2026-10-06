@@ -15,6 +15,7 @@ const email = z
 
 const newPassword = z
   .string({ required_error: "Enter a password." })
+  .min(1, "Enter a password.")
   .min(config.password.minLength, `Use at least ${config.password.minLength} characters.`)
   .max(config.password.maxLength, `Use at most ${config.password.maxLength} characters.`)
   .regex(/[a-zA-Z]/, "Include at least one letter.")
