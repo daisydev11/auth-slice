@@ -388,7 +388,22 @@ Before, with 10 minutes to live:
 
 ![Verification code row before expiry](docs/evidence/verification-code-before-expiry.png)
 
-EXPIRY_AFTER_PLACEHOLDER
+After. I waited out the real 10 minutes, then submitted the **correct** code, 18 seconds past the deadline:
+
+```bash
+curl -i -X POST http://localhost:3000/api/auth/verify \
+  -H "Content-Type: application/json" \
+  -d '{"email":"dee@example.com","code":"935171"}'
+```
+```
+HTTP/1.1 400 Bad Request
+
+{"error":{"code":"INVALID_CODE","message":"That code is incorrect or has expired. Request a new one."}}
+```
+
+The same row afterwards: same `id`, `expiresAt` now in the past, `consumedAt` still empty, and `attempts` still 0 because the code was refused for being expired before it was ever compared.
+
+![Verification code row after expiry](docs/evidence/verification-code-after-expiry.png)
 
 ---
 
